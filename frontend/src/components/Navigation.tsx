@@ -29,7 +29,7 @@ export function Navigation({ currentPage, onNavigate }: NavigationProps) {
             onClick={() => handleNavigate('birds')}
           >
             <img 
-              src="/public/burung.png"
+              src="/burung.png"
               alt="BirdSound Logo"
               className="w-10 h-10 rounded-lg object-cover"
             />
