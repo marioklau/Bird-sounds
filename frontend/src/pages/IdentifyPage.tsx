@@ -144,7 +144,7 @@ export function IdentifyPage({ onNavigate }: IdentifyPageProps) {
       const formData = new FormData();
       formData.append('file', selectedFile);
 
-      const response = await fetch('http://127.0.0.1:8000/predict', {
+      const response = await fetch('https://mariox07-bird-sound-api.hf.space/predict', {
         method: 'POST',
         body: formData,
       });
@@ -190,7 +190,7 @@ export function IdentifyPage({ onNavigate }: IdentifyPageProps) {
     setRealtimePrediction(null);
 
     try {
-      const WS_URL = 'ws://127.0.0.1:8000/ws/realtime';
+      const WS_URL = 'wss://mariox07-bird-sound-api.hf.space/ws/realtime';
       console.log('🔌 Menghubungkan ke WebSocket:', WS_URL);
       
       wsRef.current = new WebSocket(WS_URL);
