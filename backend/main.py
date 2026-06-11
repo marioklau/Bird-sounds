@@ -228,10 +228,6 @@ async def websocket_endpoint(websocket: WebSocket):
     finally:
         logger.info("WebSocket connection closed")
 
-@app.get("/ws-test")
-async def ws_test():
-    return {"message": "ws endpoint reachable"}
-
 # ==================== HEALTH CHECK ====================
 @app.get("/")
 @app.get("/health")
