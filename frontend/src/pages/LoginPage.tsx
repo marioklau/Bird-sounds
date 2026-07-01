@@ -1,44 +1,31 @@
+// pages/LoginPage.tsx
 import { useState } from 'react';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '../lib/supabase';
 
-// ✅ Tidak perlu prop onNavigate lagi
-export default function AdminLogin() {
+interface LoginPageProps {
+  onNavigate: (page: string) => void;
+  onLogin: () => void;
+}
+
+export function LoginPage({ onNavigate, onLogin }: LoginPageProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-      const user = data.user;
-      if (!user) throw new Error('User tidak ditemukan');
-
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError || !profile) throw new Error('Profil tidak ditemukan');
-      if (profile.role !== 'admin') {
-        await supabase.auth.signOut();
-        throw new Error('Anda tidak memiliki akses ke halaman admin.');
-      }
-
-      // ✅ Redirect dengan reload agar state di App ter-refresh
-      window.location.href = '/admin';
-    } catch (error: any) {
-      setError(error.message || 'Email atau password salah');
-      await supabase.auth.signOut();
-    } finally {
-      setLoading(false);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      setError(error.message);
+    } else {
+      onLogin();
+      onNavigate('birds');
     }
+    setLoading(false);
   };
 
   return (
@@ -58,6 +45,7 @@ export default function AdminLogin() {
         borderRadius: '12px',
         padding: '2rem',
       }}>
+        {/* Logo + Brand */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '2rem' }}>
           <img 
             src="/burung.png"
@@ -72,10 +60,10 @@ export default function AdminLogin() {
           <span style={{ fontSize: '15px', fontWeight: 600, color: '#0f172a' }}>BirdManager</span>
         </div>
 
-        <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#0f172a', margin: '0 0 4px' }}>
+        <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#0f172a', margin: '0 0 4px', textAlign: 'center' }}>
           Masuk
         </h2>
-        <p style={{ fontSize: '13px', color: '#64748b', margin: '0 0 1.5rem' }}>
+        <p style={{ fontSize: '13px', color: '#64748b', margin: '0 0 1.5rem', textAlign: 'center' }}>
           Masukkan kredensial Anda untuk melanjutkan
         </p>
 
@@ -89,7 +77,7 @@ export default function AdminLogin() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@email.com"
+              placeholder="anda@email.com"
               style={{
                 width: '100%',
                 boxSizing: 'border-box',
@@ -145,11 +133,67 @@ export default function AdminLogin() {
               cursor: loading ? 'not-allowed' : 'pointer',
             }}
           >
-            {loading ? 'Memproses...' : 'Masuk ke dashboard'}
+            {loading ? 'Memproses...' : 'Masuk'}
           </button>
         </form>
 
-        <p style={{ textAlign: 'center', fontSize: '12px', color: '#94a3b8', marginTop: '1.5rem', marginBottom: 0 }}>
+        {/* Link ke halaman register */}
+        <p style={{
+          textAlign: 'center',
+          fontSize: '13px',
+          color: '#64748b',
+          marginTop: '1.5rem',
+          marginBottom: '0.5rem', // dikurangi agar tombol kembali dekat
+        }}>
+          Belum punya akun?{' '}
+          <button
+            onClick={() => onNavigate('register')}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#059669',
+              fontWeight: 600,
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              padding: 0,
+              fontSize: '13px',
+            }}
+          >
+            Daftar
+          </button>
+        </p>
+
+        {/* 🔹 Tombol kembali ke HomePage */}
+        <p style={{
+          textAlign: 'center',
+          fontSize: '13px',
+          color: '#64748b',
+          margin: '0 0 1rem',
+        }}>
+          <button
+            onClick={() => onNavigate('home')}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#64748b',
+              fontWeight: 500,
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              padding: 0,
+              fontSize: '13px',
+            }}
+          >
+            ← Kembali ke Beranda
+          </button>
+        </p>
+
+        <p style={{
+          textAlign: 'center',
+          fontSize: '12px',
+          color: '#94a3b8',
+          marginTop: '1rem',
+          marginBottom: 0,
+        }}>
           © 2025 BirdManager
         </p>
       </div>

@@ -1,5 +1,6 @@
+// pages/BirdDetailPage.tsx
 import { useState, useEffect } from 'react';
-import { ArrowLeft, BookOpen, MapPin, Volume2, Calendar, Bird as BirdIcon } from 'lucide-react';
+import { ArrowLeft, BookOpen, MapPin, Volume2, Calendar, Bird as BirdIcon, Download } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { AudioPlayer } from '../components/ui/AudioPlayer';
 import { LoadingPage } from '../components/ui/Loading';
@@ -34,7 +35,9 @@ export function BirdDetailPage({ birdId, onNavigate }: BirdDetailPageProps) {
       const { data: audioData, error: audioError } = await supabase
         .from('audio_samples')
         .select('*')
-        .eq('bird_id', birdId);
+        .eq('bird_id', birdId)
+        .eq('status', 'approved')
+        .order('created_at', { ascending: true });
 
       if (audioError) throw audioError;
       setAudioSamples(audioData || []);
@@ -42,6 +45,27 @@ export function BirdDetailPage({ birdId, onNavigate }: BirdDetailPageProps) {
       console.error('Error fetching bird detail:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Fungsi download dengan fetch + blob
+  const downloadAudio = async (url: string, fileName: string) => {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Gagal mengambil file');
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error('Download gagal:', error);
+      // Fallback: buka di tab baru jika fetch gagal
+      window.open(url, '_blank');
     }
   };
 
@@ -64,7 +88,6 @@ export function BirdDetailPage({ birdId, onNavigate }: BirdDetailPageProps) {
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        {/* Tombol Kembali */}
         <button
           onClick={() => onNavigate('birds')}
           className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 mb-6 transition-colors"
@@ -74,10 +97,9 @@ export function BirdDetailPage({ birdId, onNavigate }: BirdDetailPageProps) {
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-          {/* Kolom Kiri - Gambar & Info Dasar */}
+          {/* Kolom Kiri */}
           <div className="lg:col-span-2">
             <div className="sticky top-20">
-              {/* Card Gambar */}
               <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                 <div className="aspect-square bg-gradient-to-br from-emerald-500 to-teal-600 relative overflow-hidden">
                   {bird.image_url ? (
@@ -121,7 +143,7 @@ export function BirdDetailPage({ birdId, onNavigate }: BirdDetailPageProps) {
             </div>
           </div>
 
-          {/* Kolom Kanan - Detail */}
+          {/* Kolom Kanan */}
           <div className="lg:col-span-3 space-y-6">
             {/* Deskripsi */}
             <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
@@ -162,19 +184,36 @@ export function BirdDetailPage({ birdId, onNavigate }: BirdDetailPageProps) {
 
               {audioSamples.length > 0 ? (
                 <div className="space-y-4">
-                  {audioSamples.map((audio, index) => (
-                    <div key={audio.id}>
-                      <p className="text-sm font-medium text-gray-600 mb-2">
-                        Sample {index + 1}
-                        {audio.duration > 0 && (
-                          <span className="text-gray-400 ml-2">
-                            ({audio.duration} detik)
-                          </span>
-                        )}
-                      </p>
-                      <AudioPlayer src={audio.audio_url} />
-                    </div>
-                  ))}
+                  {audioSamples.map((audio, index) => {
+                    // Buat nama file deskriptif
+                    const fileExtension = audio.audio_url.split('.').pop() || 'mp3';
+                    const fileName = `${bird.name}-sample-${index + 1}.${fileExtension}`;
+
+                    return (
+                      <div key={audio.id}>
+                        <p className="text-sm font-medium text-gray-600 mb-2">
+                          Sample {index + 1}
+                          {audio.duration > 0 && (
+                            <span className="text-gray-400 ml-2">
+                              ({audio.duration} detik)
+                            </span>
+                          )}
+                        </p>
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1">
+                            <AudioPlayer src={audio.audio_url} />
+                          </div>
+                          <button
+                            onClick={() => downloadAudio(audio.audio_url, fileName)}
+                            className="flex-shrink-0 p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
+                            title="Unduh audio"
+                          >
+                            <Download size={20} className="text-gray-600" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="text-center py-10 bg-gray-50 rounded-xl">

@@ -8,7 +8,8 @@ import {
   AlertCircle,
   Activity,
   FileAudio,
-  Volume2
+  Volume2,
+  BirdIcon, // <-- ditambahkan
 } from 'lucide-react';
 
 import { Bird } from '../types/database';
@@ -578,6 +579,47 @@ export function IdentifyPage({ onNavigate }: IdentifyPageProps) {
             </button>
           </div>
         )}
+
+        {/* ============================================================ */}
+        {/* ✨ JENIS BURUNG TERIDENTIFIKASI — DIPINDAHKAN DARI HOMEPAGE */}
+        {/* ============================================================ */}
+        <div className="mt-12 sm:mt-16 pt-6 sm:pt-8 border-t border-gray-200">
+          <div className="text-center mb-6">
+            <h3 className="text-md sm:text-lg font-semibold text-gray-800">
+              ✨ Jenis Burung Teridentifikasi
+            </h3>
+            <p className="text-xs text-gray-500 mt-1">
+              Beberapa spesies yang sering dikenali oleh sistem AI kami
+            </p>
+          </div>
+          <div className="flex flex-wrap justify-center gap-3 sm:gap-4">
+            {[
+              { name: 'Cucak Kutilang', latin: 'Pycnonotus aurigaster' },
+              { name: 'Burung Gereja', latin: 'Passer montanus' },
+              { name: 'Tekukur Biasa', latin: 'Spilopelia chinensis' },
+              { name: 'Cabak Kota', latin: 'Caprimulgus affinis' },
+              { name: 'Kipasan Belang', latin: 'Rhipidura javanica' }
+            ].map((bird, idx) => (
+              <div
+                key={idx}
+                className="bg-white/70 backdrop-blur-sm rounded-2xl px-4 py-2 sm:px-5 sm:py-3 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200 hover:-translate-y-1"
+              >
+                <div className="flex items-center gap-2">
+                  <BirdIcon size={16} className="text-emerald-500" />
+                  <span className="font-medium text-gray-800 text-sm sm:text-base">
+                    {bird.name}
+                  </span>
+                </div>
+                <p className="text-[10px] italic text-gray-400 mt-0.5 text-center">
+                  {bird.latin}
+                </p>
+              </div>
+            ))}
+          </div>
+          <p className="text-center text-[11px] text-gray-400 mt-5">
+            *Hasil identifikasi berdasarkan suara yang diunggah pengguna
+          </p>
+        </div>
 
       </div>
     </div>

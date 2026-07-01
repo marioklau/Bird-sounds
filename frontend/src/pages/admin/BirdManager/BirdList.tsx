@@ -12,12 +12,32 @@ interface BirdListProps {
 }
 
 export default function BirdList({ birds, onEdit, onDelete, onManageAudio, getRegionDisplay }: BirdListProps) {
+  // State untuk paginasi
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // Hitung total halaman
+  const totalPages = Math.ceil(birds.length / itemsPerPage);
+  const indexOfLast = currentPage * itemsPerPage;
+  const indexOfFirst = indexOfLast - itemsPerPage;
+  const currentBirds = birds.slice(indexOfFirst, indexOfLast);
+
+  // State lain
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [notification, setNotification] = useState<{
     type: 'success' | 'error' | null;
     message: string;
   }>({ type: null, message: '' });
+
+  // Fungsi pindah halaman
+  const goToNextPage = () => {
+    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+  };
+
+  const goToPrevPage = () => {
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
+  };
 
   const showNotification = (type: 'success' | 'error', message: string) => {
     setNotification({ type, message });
@@ -32,13 +52,21 @@ export default function BirdList({ birds, onEdit, onDelete, onManageAudio, getRe
       await onDelete(id);
       showNotification('success', 'Data burung berhasil dihapus!');
       setDeleteConfirm(null);
+      // Jika setelah hapus data tersisa kurang dari 1 halaman dan kita tidak di halaman 1, pindah ke halaman sebelumnya
+      const remaining = birds.length - 1;
+      const newTotalPages = Math.ceil(remaining / itemsPerPage);
+      if (currentPage > newTotalPages && newTotalPages > 0) {
+        setCurrentPage(newTotalPages);
+      } else if (remaining === 0) {
+        setCurrentPage(1);
+      }
     } catch (error) {
       showNotification('error', 'Gagal menghapus data burung');
     } finally {
       setDeleting(false);
     }
   };
-  
+
   return (
     <>
       {/* Notification Toast */}
@@ -76,7 +104,7 @@ export default function BirdList({ birds, onEdit, onDelete, onManageAudio, getRe
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {birds.map((bird) => (
+            {currentBirds.map((bird) => (
               <tr key={bird.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
@@ -140,13 +168,20 @@ export default function BirdList({ birds, onEdit, onDelete, onManageAudio, getRe
                 </td>
               </tr>
             ))}
+            {currentBirds.length === 0 && (
+              <tr>
+                <td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-400">
+                  Tidak ada data burung.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
 
       {/* Mobile card list */}
       <div className="sm:hidden space-y-2">
-        {birds.map((bird) => (
+        {currentBirds.map((bird) => (
           <div key={bird.id} className="bg-white border border-gray-100 rounded-lg p-3">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-lg overflow-hidden bg-emerald-50 flex items-center justify-center shrink-0">
@@ -200,7 +235,45 @@ export default function BirdList({ birds, onEdit, onDelete, onManageAudio, getRe
             </div>
           </div>
         ))}
+        {currentBirds.length === 0 && (
+          <div className="bg-white border border-gray-100 rounded-lg p-6 text-center text-sm text-gray-400">
+            Tidak ada data burung.
+          </div>
+        )}
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-4 px-2">
+          <div className="text-xs text-gray-400">
+            Menampilkan {indexOfFirst + 1}–{Math.min(indexOfLast, birds.length)} dari {birds.length} data
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={goToPrevPage}
+              disabled={currentPage === 1}
+              className={`px-3 py-1 text-sm rounded border transition-colors ${
+                currentPage === 1
+                  ? 'border-gray-200 text-gray-300 cursor-not-allowed'
+                  : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              Previous
+            </button>
+            <button
+              onClick={goToNextPage}
+              disabled={currentPage === totalPages}
+              className={`px-3 py-1 text-sm rounded border transition-colors ${
+                currentPage === totalPages
+                  ? 'border-gray-200 text-gray-300 cursor-not-allowed'
+                  : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       {deleteConfirm && (
